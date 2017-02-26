@@ -2,84 +2,84 @@
 #include "string"
 #include "iostream"
 #include "fstream"
-void Context(std::string* buf, int * position, int check, int cont, int n)
+void Context(std::string* buf, int * position, int founded, int context_words, int words)
 {
-	if (check != 0)
+	for (int j = 0; j < founded; j++)	
 	{
-		for (int j = 0; j < check; j++)
+		for (int i = 0; i < (context_words * 2 + 1); i++)  //context_words*2 + 1 - означает количество контекстных слов с обоих сторон + само слово.
 		{
-			for (int i = 0; i < (cont * 2 + 1); i++)  //cont*2 + 1 - означает количество контекстных слов с обоих сторон + само слово.
+			if (position[j] - context_words + i < 0)		//Если ищется контекст для первого элемента слева - пропускаем
 			{
-				if (position[j] - cont + i < 0)		//Если ищется контекст для первого элемента слева
-				{
-					continue;
-				}
-				if (position[j] == position[j] - cont + i)
-				{
-					std::cout << " |_" << buf[position[j]] << "_| ";  //Для красоты :D  (выделение искомого слова)
-					continue;
-				}
-				std::cout << buf[position[j] - cont + i] << ' ';
-				if (buf[position[j] - cont + i] == buf[n - 1]) //Если ищется контекст для последнего элемента справа 
-				{
-					break;
-				}
+				continue;
 			}
-			std::cout << "\n\n\n";
+			std::cout << buf[position[j] - context_words + i] << ' ';
+			if (buf[position[j] - context_words + i] == buf[words - 1]) //Если ищется контекст для последнего элемента справа - брейк
+			{
+				break;
+			}
 		}
-	}
-	else
-	{
-		std::cout << "This word was not founded. Context does not exist" << std::endl;
+		std::cout << "\n\n\n";
 	}
 }
-int _tmain(int argc, _TCHAR* argv[])
+int Search(std::ifstream& File, std::string *buf, std::string str, int words)
 {
-	int n = 0;				//Счетчик количества слов
-	std::ifstream File("FileTest.txt");
-	std::string endfile;
-	while (std::getline(File, endfile, ' '))
-	{
-		n++;
-	}
-	File.clear();
-	File.seekg(0);
-	std::string *buf = new std::string[n];
-	std::string str;
-	std::cout << "Keyword : ";
-	std::cin >> str;
-
-
-	int check = 0;
-	for (int i = 0; i < n; i++)
+	int founded = 0;
+	for (int i = 0; i < words; i++)
 	{
 		std::getline(File, buf[i], ' ');
 		if (buf[i] == str)
 		{
-			check++;
+			founded++;
 		}
 	}
-	int* position = new int[check];
+	return founded;
+}
+int FileSize(std::ifstream& File)
+{
+	int words = 0;
+	std::string endfile;
+	while (std::getline(File, endfile, ' '))
+	{
+		words++;
+	}
+	File.clear();
+	File.seekg(0);
+	return words;
+}
+int _tmain(int argc, _TCHAR* argv[])
+{
+	std::ifstream File("FileTest.txt");
+	int words = FileSize(File); //Количество слов
+	std::string *buf = new std::string[words];
+	std::string str;
+	std::cout << "Keyword : ";
+	std::cin >> str;
+	int founded = Search(File, buf, str, words);
+	int* position = new int[founded];
 	int j = 0;
-	for (int i = 0; i < n; i++)
-	{										//Пришлось сделать второй такой же цикл для забивания массива, содержащего позиции искомых слов
-		if (buf[i] == str)					//т.к. памяти под него требовалось выделять столько, сколько конкретных найдено слов.
+	for (int i = 0; i < words; i++)
+	{										
+		if (buf[i] == str)		
 		{
 			position[j] = i;
 			j++;
 		}
 	}
-
-
-	std::cout << "This word was founded in this text " <<check << " times" << std::endl;
-	std::cout << "\n Number of context words: ";
-	int cont = 0;
-	std::cin >> cont;
-	Context(buf, position, check, cont, n);
-
-
+	if (founded != 0)
+	{	
+		std::cout << "This word was founded in this text " << founded << " times" << std::endl;
+		std::cout << "\n Number of context words: ";
+		int context_words = 0;
+		std::cin >> context_words;
+		Context(buf, position, founded, context_words, words);
+	}
+	else
+	{
+		std::cout << "Word was not founded. Context does not exist!" <<std::endl;
+	}
 	delete[]buf;
 	delete[]position;
 	system("pause");
 	return 0;
 }
+
