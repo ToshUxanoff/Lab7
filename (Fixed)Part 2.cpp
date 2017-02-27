@@ -2,6 +2,8 @@
 #include "string"
 #include "iostream"
 #include "fstream"
+#include "cctype"
+
 void Context(std::string* buf, int * position, int founded, int context_words, int words)
 {
 	for (int j = 0; j < founded; j++)	
@@ -26,7 +28,6 @@ int Search(std::ifstream& File, std::string *buf, std::string str, int words)
 	int founded = 0;
 	for (int i = 0; i < words; i++)
 	{
-		std::getline(File, buf[i], ' ');
 		if (buf[i] == str)
 		{
 			founded++;
@@ -36,15 +37,43 @@ int Search(std::ifstream& File, std::string *buf, std::string str, int words)
 }
 int FileSize(std::ifstream& File)
 {
+	char ch = 0;
 	int words = 0;
 	std::string endfile;
-	while (std::getline(File, endfile, ' '))
+	while (!File.eof())
 	{
-		words++;
+		File.get(ch);
+		if (std::isalnum(ch) == false)
+		{
+			words++;
+		}
 	}
 	File.clear();
 	File.seekg(0);
 	return words;
+}
+std::string* Read(std::ifstream& File, std::string* word, int words)
+{
+	char ch = 0;
+	std::string buffer;
+	for (int i = 0; i < words; i++)
+	{
+		while (!File.eof())
+		{
+			File.get(ch);
+			if (std::isalnum(ch) == false)
+			{
+				break;
+			}
+			else
+			{
+				buffer += ch;
+			}
+		}
+		word[i] = buffer;
+		buffer.erase(buffer.begin(), buffer.end());
+	}
+	return word;
 }
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -52,6 +81,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	int words = FileSize(File); //Количество слов
 	std::string *buf = new std::string[words];
 	std::string str;
+	Read(File, buf, words);
 	std::cout << "Keyword : ";
 	std::cin >> str;
 	int founded = Search(File, buf, str, words);
